@@ -11,13 +11,12 @@ class SubsampleFeatures(luigi.hadoop.JobTask):
 class TrainClassifier(luigi.Task):
   date_interval = luigi.DateIntervalParameter()
   n_trees = luigi.IntParameter(default=10)
-  def requires(self): return SubsampleHadoopJob(self.date_interval)
+  def requires(self): return SubsampleFeatures(self.date_interval)
   def run(self): pass # TODO: implement
   def output(self): return luigi.LocalTarget('model-%s.pickle' % self.date_interval)
  
 class UploadModel(luigi.Task):
   date_interval = luigi.DateIntervalParameter()
-  server = luigi.Parameter(default='server.spotify.net')
   n_trees = luigi.IntParameter(default=10)
   def requires(self): return TrainClassifier(self.date_interval, self.n_trees)
   def run(self): pass # TODO: implement

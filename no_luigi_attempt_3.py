@@ -1,13 +1,12 @@
 import sys
 import argparse
-from other_module import subsample_features_job, train_classifier, upload_model
+from other_module import subsample_features_job, train_classifier, inspect_model
  
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
   parser.add_argument('--date-first', required=True)
   parser.add_argument('--date-last', required=True)
   parser.add_argument('--n-trees', required=True)
-  parser.add_argument('--server', default='server.spotify.net')
   args = parser.parse_args()
   
   def parse_date(d): return datetime.date(*(int(x) for x in d.split('-')))
@@ -31,4 +30,4 @@ if __name__ == '__main__':
         raise
       
     train_classifier(subsampled_fn, model_fn, n_trees=args.n_trees)
-  upload_model(model_fn, args.server)
+  inspect_model(model_fn)

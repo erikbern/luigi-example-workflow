@@ -1,5 +1,5 @@
 import os
-from other_module import subsample_features_job, train_classifier, upload_model
+from other_module import subsample_features_job, train_classifier, inspect_model
  
 if __name__ == '__main__':
   if not os.path.exists('model.pickle'):
@@ -13,4 +13,4 @@ if __name__ == '__main__':
         raise
       
     train_classifier('/tmp/subsampled', 'model.pickle')
-  upload_model('model.pickle', 'server.spotify.net')
+  inspect_model('model.pickle')
