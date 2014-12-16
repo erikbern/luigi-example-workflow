@@ -15,7 +15,7 @@ class TrainClassifier(luigi.Task):
   def run(self): pass # TODO: implement
   def output(self): return luigi.LocalTarget('model-%s.pickle' % self.date_interval)
  
-class UploadModel(luigi.Task):
+class InspectModel(luigi.Task):
   date_interval = luigi.DateIntervalParameter()
   n_trees = luigi.IntParameter(default=10)
   def requires(self): return TrainClassifier(self.date_interval, self.n_trees)
