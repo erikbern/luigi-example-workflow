@@ -1,11 +1,11 @@
 import pickle
 import random
-from spotify.reporting_recorts.common import parseString
-import luigi, luigi.hadoop, luigi.hdfs
+from spotify.reporting_records.common import parseString
+import luigi, spotify.luigi
 from spotify.luigi.external_shrek import EndSongCleaned
 from sklearn.ensemble import GradientBoostingClassifier
  
-class SubsampleFeatures(luigi.hadoop.JobTask):
+class SubsampleFeatures(spotify.luigi.HadoopJobTask):
   date_interval = luigi.DateIntervalParameter()
 
   def requires(self):
