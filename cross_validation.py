@@ -1,4 +1,4 @@
-from luigi_workflow_full import TrainClassifier, SubsampleFeatures
+from luigi_workflow_full import TrainClassifier, SubsampleFeatures, read_input
 import pickle
 from sklearn.metrics import roc_curve, auc
 
@@ -17,12 +17,7 @@ class CrossValidation(luigi.Task):
         classifier = pickle.load(tc_a.open('r'))
 
         for tag, input in [('A', sf_a), ('B', sf_b)]:
-            X, y = [], []
-            for line in input.open('r'):
-                items = line.strip().split()
-                X.append([float(x) for x in items[:-1]])
-                y.append(int(items[-1] == 'True'))
-
+            X, y = read_input(input.open('r'))
             
             y_pred = classifier.predict(X)
             print '%s AUC: %s' % (tag, auc(*roc_curve(y, y_pred)))

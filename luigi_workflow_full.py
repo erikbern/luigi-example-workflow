@@ -24,6 +24,16 @@ class SubsampleFeatures(spotify.luigi.HadoopJobTask):
     
   def output(self):
     return luigi.hdfs.HdfsTarget('/tmp/subsampled-%s' % self.date_interval)
+
+
+def read_input(input):
+  X, y = [], []
+  for line in input.open('r'):
+    items = line.strip().split()
+    X.append([float(x) for x in items[:-1]])
+    y.append(int(items[-1] == 'True'))
+  return X, y
+
   
 class TrainClassifier(luigi.Task):
   date_interval = luigi.DateIntervalParameter()
@@ -33,18 +43,13 @@ class TrainClassifier(luigi.Task):
     return SubsampleFeatures(self.date_interval)
 
   def run(self):
-    X, y = [], []
-    for line in self.input().open('r'):
-      items = line.strip().split()
-      X.append([float(x) for x in items[:-1]])
-      y.append(int(items[-1] == 'True'))
-
-      c = GradientBoostingClassifier(n_estimators=self.n_trees)
-      c.fit(X, y)
+    X, y = read_input(self.input())
+    c = GradientBoostingClassifier(n_estimators=self.n_trees)
+    c.fit(X, y)
       
-      f = self.output().open('w')
-      pickle.dump(c, f)
-      f.close()
+    f = self.output().open('w')
+    pickle.dump(c, f)
+    f.close()
 
   def output(self):
     return luigi.LocalTarget('model-%s.pickle' % self.date_interval)
