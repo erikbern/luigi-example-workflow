@@ -6,11 +6,12 @@ import luigi
 class CrossValidation(luigi.Task):
     date_interval_a = luigi.DateIntervalParameter()
     date_interval_b = luigi.DateIntervalParameter()
+    n_trees = luigi.IntParameter(default=10)
 
     def requires(self):
         return (SubsampleFeatures(self.date_interval_a),
                 SubsampleFeatures(self.date_interval_b),
-                TrainClassifier(self.date_interval_a))
+                TrainClassifier(self.date_interval_a, self.n_trees))
 
     def run(self):
         sf_a, sf_b, tc_a = self.input()
