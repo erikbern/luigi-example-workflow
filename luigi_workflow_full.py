@@ -1,9 +1,8 @@
 import pickle
-import random
+import random, sys
 from spotify.reporting_records.common import parseString
 import luigi, spotify.luigi
 from spotify.luigi.external_shrek import EndSongCleaned
-from sklearn.ensemble import GradientBoostingClassifier
  
 class SubsampleFeatures(spotify.luigi.HadoopJobTask):
   date_interval = luigi.DateIntervalParameter()
@@ -15,15 +14,14 @@ class SubsampleFeatures(spotify.luigi.HadoopJobTask):
     if random.random() > 1e-4: return
     rec = parseString(line)
     features = [rec.time, rec.ms_played, int(rec.shuffle), int(rec.local_track), rec.bitrate]
-    features += [int(rec.country == country) for country in ['US', 'SE', 'GB', 'NO', 'FI', 'FR', 'ES']]
-    yield features, rec.skipped
+    yield (features, rec.skipped)
 
-  def reducer(self):
-    for features, label in values:
-      yield features + [label]
-    
+  def reducer(self, features, labels):
+    for label in labels:
+        yield features + [label]
+
   def output(self):
-    return luigi.hdfs.HdfsTarget('/tmp/subsampled-%s' % self.date_interval)
+    return spotify.luigi.HdfsTarget('/tmp/subsampled-%s' % self.date_interval)
 
 
 def read_input(input):
@@ -43,16 +41,33 @@ class TrainClassifier(luigi.Task):
     return SubsampleFeatures(self.date_interval)
 
   def run(self):
+    from sklearn.ensemble import GradientBoostingClassifier
+
     X, y = read_input(self.input())
     c = GradientBoostingClassifier(n_estimators=self.n_trees)
     c.fit(X, y)
-      
+
     f = self.output().open('w')
     pickle.dump(c, f)
     f.close()
 
   def output(self):
-    return luigi.LocalTarget('model-%s.pickle' % self.date_interval)
+    return luigi.LocalTarget('model-%s-%d.pickle' % (self.date_interval, self.n_trees))
+
+
+class InspectModel(luigi.Task):
+  date_interval = luigi.DateIntervalParameter()
+  n_trees = luigi.IntParameter(default=10)
+
+  def requires(self):
+    return TrainClassifier(self.date_interval, self.n_trees)
+
+  def run(self):
+    model = pickle.load(self.input().open('r'))
+    features = ['time', 'ms_played', 'shuffle', 'local_track', 'bitrate']
+    for f, weight in zip(features, model.feature_importances_):
+      print '%20s %7.4f%%' % (f, weight * 100)
+  
  
 if __name__ == '__main__':
   luigi.run()
