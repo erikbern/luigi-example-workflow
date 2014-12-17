@@ -17,7 +17,8 @@ class CrossValidation(luigi.Task):
 
         classifier = pickle.load(tc_a.open('r'))
 
-        for date_interval, tag, input in [(self.date_interval_a, 'train', sf_a), (self.date_interval_b, 'test', sf_b)]:
+        for date_interval, tag, input in [(self.date_interval_a, 'train', sf_a),
+                                          (self.date_interval_b, 'test', sf_b)]:
             X, y = read_input(input)
             
             y_pred = classifier.predict(X)
